@@ -14,38 +14,24 @@ const RootLayout = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkAuth();
-      // Pequeno delay para garantir que tudo está montado
-      setTimeout(() => {
-        setIsReady(true);
-      }, 300);
+      setIsReady(true);
     };
-    
     initialize();
   }, []);
 
   useEffect(() => {
     if (!isReady || isLoading) return;
 
-    console.log("RootLayout - Estado atual:", {
-      temUser: !!user,
-      temToken: !!token,
-      segmentoAtual: segments[0],
-      isLoading
-    });
-
     const isAuthScreen = segments[0] === "(auth)";
     const isSignedIn = user && token;
 
     if (!isAuthScreen && !isSignedIn) {
-      console.log("Redirecionando para tela de auth");
       router.replace("/(auth)");
     } else if (isAuthScreen && isSignedIn) {
-      console.log("Redirecionando para tabs");
       router.replace("/(tabs)");
     }
   }, [segments, user, token, router, isReady, isLoading]);
 
-  // Tela de carregamento inicial
   if (!isReady || isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>

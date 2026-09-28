@@ -14,7 +14,7 @@ import Svg, { Path } from 'react-native-svg'
 import ViewShot from 'react-native-view-shot'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
-import * as FileSystem from 'expo-file-system'
+import * as FileSystem from 'expo-file-system/legacy';
 import useAuthStore from '../store/authStore'
 import useContactsStore from '../store/contactsStore'
 import useMessagesStore from '../store/messagesStore'
@@ -86,7 +86,9 @@ export default function Draw() {
     setShowContacts(false)
     setSending(true)
     try {
-      // Captura o SVG como PNG
+
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       const uri = await shotRef.current.capture()
 
       // Lê como base64
@@ -122,7 +124,11 @@ export default function Draw() {
       {/* Área de desenho */}
       <ViewShot
         ref={shotRef}
-        options={{ format: 'png', quality: 1 }}
+        options={{
+          format: 'png',
+          quality: 1,
+          renderToHardwareTextureAndroid: true, // <-- Adicione esta linha
+        }}
         style={styles.canvasWrapper}
       >
         <View

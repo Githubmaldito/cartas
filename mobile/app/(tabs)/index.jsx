@@ -37,15 +37,22 @@ export default function Inbox() {
   const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
 
-  const load = async (refresh = false) => {
-    if (refresh) setRefreshing(true)
+  const load = async () => {
     await fetchReceived(token)
-    if (refresh) setRefreshing(false)
+  }
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    try {
+      await fetchReceived(token)
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   useEffect(() => {
-    load()
-  }, [])
+    void load()
+  }, [fetchReceived, token])
 
   const openMessage = async (item) => {
     if (!item.read) await markAsRead(token, item._id)
@@ -88,7 +95,7 @@ export default function Inbox() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => load(true)}
+            onRefresh={handleRefresh}
             colors={[COLORS.primary]}
             tintColor={COLORS.primary}
           />
