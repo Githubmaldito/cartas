@@ -11,8 +11,8 @@ const messageSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    imageUrl: {
-        type: String,
+        imageUrl: {
+        type:[String],
         required: true,
     },
     read: {

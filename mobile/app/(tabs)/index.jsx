@@ -71,7 +71,10 @@ export default function Inbox() {
           <Text style={styles.username}>@{item.from?.username || 'desconhecido'}</Text>
           <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
         </View>
-        <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} contentFit="cover" />
+        <View style={styles.sealedEnvelope}>
+          <Ionicons name="mail" size={42} color={COLORS.primary} />
+          <Text style={styles.sealedText}>Toque para abrir</Text>
+        </View>
       </View>
       {!item.read && <View style={styles.unreadDot} />}
     </TouchableOpacity>
@@ -151,6 +154,22 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: COLORS.primary,
+  },
+  sealedEnvelope: {
+    width: '100%',
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: '#22223a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#33334d',
+    borderStyle: 'dashed',
+  },
+  sealedText: {
+    color: COLORS.textSecondary,
+    fontSize: 12,
   },
   empty: { alignItems: 'center', marginTop: 80, gap: 8 },
   emptyText: { fontSize: 16, fontWeight: '600', color: COLORS.textSecondary },

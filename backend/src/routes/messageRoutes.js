@@ -6,35 +6,36 @@ import protectRoute from '../middleware/auth_middleware.js';
 
 const router = express.Router();
 
-// Enviar uma mensagem (desenho) para um contato
+// enviar mensagem  
 router.post("/", protectRoute, async (req, res) => {
     try {
-        const { to, image } = req.body;
+        const { to, images } = req.body;
 
-        if (!to || !image) {
-            return res.status(400).json({ message: "Missing recipient or image." });
+        if (!to || !images || !Array.isArray(images) || images.length === 0) {
+            return res.status(400).json({ message: "Missing recipient or images." });
         }
 
-        // Verifica se o destinatário existe
         const recipient = await User.findById(to);
         if (!recipient) {
             return res.status(404).json({ message: "Recipient not found." });
         }
 
-        // Verifica se o destinatário está na lista de contatos do remetente
         const sender = await User.findById(req.user._id);
         if (!sender.contacts.map(id => id.toString()).includes(to)) {
             return res.status(403).json({ message: "You can only send messages to your contacts." });
         }
 
-        // Upload da imagem (base64) para o Cloudinary
-        const upload = await cloudinary.uploader.upload(image);
-        const imageUrl = upload.secure_url;
+        // Upload de cada página
+        const imageUrls = [];
+        for (const img of images) {
+            const upload = await cloudinary.uploader.upload(img);
+            imageUrls.push(upload.secure_url);
+        }
 
         const message = new Message({
             from: req.user._id,
             to,
-            imageUrl,
+            imageUrls,
         });
 
         await message.save();
@@ -46,7 +47,7 @@ router.post("/", protectRoute, async (req, res) => {
     }
 });
 
-// Listar mensagens recebidas
+// mensagens recebidas
 router.get("/", protectRoute, async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
@@ -73,7 +74,7 @@ router.get("/", protectRoute, async (req, res) => {
     }
 });
 
-// Listar mensagens enviadas
+// mensagens enviadas
 router.get("/sent", protectRoute, async (req, res) => {
     try {
         const messages = await Message.find({ from: req.user._id })
@@ -127,12 +128,16 @@ router.delete("/:id", protectRoute, async (req, res) => {
         }
 
         // Remove a imagem do Cloudinary
-        if (message.imageUrl && message.imageUrl.includes("res.cloudinary.com")) {
-            try {
-                const publicId = message.imageUrl.split("/").pop().split(".")[0];
-                await cloudinary.uploader.destroy(publicId);
-            } catch (deleteError) {
-                console.log("Error deleting image from Cloudinary:", deleteError);
+        if (message.imageUrls && message.imageUrls.length > 0) {
+            for (const url of message.imageUrls) {
+                if (url.includes("res.cloudinary.com")) {
+                    try {
+                        const publicId = url.split("/").pop().split(".")[0];
+                        await cloudinary.uploader.destroy(publicId);
+                    } catch (deleteError) {
+                        console.log("Error deleting image from Cloudinary:", deleteError);
+                    }
+                }
             }
         }
 

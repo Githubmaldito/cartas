@@ -35,20 +35,34 @@ const useMessagesStore = create((set, get) => ({
     }
   },
 
-  sendMessage: async (token, to, imageBase64) => {
+  // sendMessage: async (token, to, imageBase64) => {
+  //   const res = await fetch(`${API_URL}/messages`, {
+  //     method: 'POST',
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //       'Content-Type': 'application/json',
+  //     },
+  //     body: JSON.stringify({ to, image: imageBase64 }),
+  //   })
+  //   const data = await res.json()
+  //   if (!res.ok) throw new Error(data.message || 'Falha ao enviar')
+  //   return data
+  // },
+
+  sendMessage: async (token, to, imagesBase64) => {
     const res = await fetch(`${API_URL}/messages`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ to, image: imageBase64 }),
-    })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.message || 'Falha ao enviar')
-    return data
+      body: JSON.stringify({ to, images: imagesBase64 }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Falha ao enviar');
+    return data;
   },
-
+  
   markAsRead: async (token, messageId) => {
     try {
       await fetch(`${API_URL}/messages/${messageId}/read`, {
