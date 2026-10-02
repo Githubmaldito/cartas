@@ -25,10 +25,11 @@ router.post("/", protectRoute, async (req, res) => {
             return res.status(403).json({ message: "You can only send messages to your contacts." });
         }
 
-        // Upload de cada página
         const imageUrls = [];
         for (const img of images) {
+            console.log('[POST /messages] upload de imagem, tipo:', typeof img, 'tamanho:', img?.length);
             const upload = await cloudinary.uploader.upload(img);
+            console.log('[POST /messages] upload ok:', upload.secure_url);
             imageUrls.push(upload.secure_url);
         }
 
@@ -39,6 +40,7 @@ router.post("/", protectRoute, async (req, res) => {
         });
 
         await message.save();
+        console.log('[POST /messages] salvo com', imageUrls.length, 'imagens');
 
         res.status(201).json(message);
     } catch (error) {

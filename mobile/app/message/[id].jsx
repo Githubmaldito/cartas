@@ -6,58 +6,72 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Dimensions,
+  Image as RNImage,
+  useWindowDimensions,
 } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Ionicons } from '@expo/vector-icons'
-import { Image } from 'expo-image'
+import { Image as ExpoImage } from 'expo-image'
 import useAuthStore from '../../store/authStore'
 import useMessagesStore from '../../store/messagesStore'
-
-const { width } = Dimensions.get('window')
+import { API_URL } from '../../constants/api'
 
 export default function MessageDetail() {
   const { id } = useLocalSearchParams()
   const router = useRouter()
   const { token } = useAuthStore()
   const { messages } = useMessagesStore()
+  const { width } = useWindowDimensions()
+
   const [message, setMessage] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => !!id && !!token)
   const [currentPage, setCurrentPage] = useState(0)
-  const flatListRef = useRef(null)
 
   useEffect(() => {
-    // Busca na store já carregada; se não tiver, faz fetch
-    const found = messages.find((m) => m._id === id)
-    if (found) {
-      setMessage(found)
-      setLoading(false)
-    } else {
-      // fallback: busca direto (caso o app tenha recarregado)
-      const fetchMessage = async () => {
-        try {
-          const res = await fetch(
-            `${require('../../constants/api').API_URL}/messages?limit=100`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
-          const data = await res.json()
-          if (!res.ok) throw new Error(data.message || 'Erro')
-          const m = (data.messages || []).find((x) => x._id === id)
-          if (!m) throw new Error('Mensagem não encontrada')
+    let cancelled = false
+
+    const load = async () => {
+      try {
+        const found = messages.find((m) => m._id === id)
+        if (found) {
+          if (!cancelled) {
+            setMessage(found)
+            setLoading(false)
+          }
+          return
+        }
+
+        const res = await fetch(`${API_URL}/messages?limit=100`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.message || 'Erro ao buscar')
+
+        const m = (data.messages || []).find((x) => x._id === id)
+        if (!m) throw new Error('Mensagem não encontrada')
+
+        if (!cancelled) {
           setMessage(m)
-        } catch (err) {
+          setLoading(false)
+        }
+      } catch (err) {
+        console.error('[MessageDetail] erro:', err)
+        if (!cancelled) {
           Alert.alert('Erro', err.message)
-          router.back()
-        } finally {
           setLoading(false)
         }
       }
-      fetchMessage()
     }
-  }, [id])
+
+    if (!id || !token) return
+    load()
+
+    return () => { cancelled = true }
+  }, [id, token])
 
   const formatDate = (dateString) => {
+    if (!dateString) return ''
     const d = new Date(dateString)
     return d.toLocaleString('pt-BR', {
       day: '2-digit',
@@ -77,12 +91,35 @@ export default function MessageDetail() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#6c5ce7" />
+        <Text style={styles.loadingText}>Carregando carta...</Text>
       </View>
     )
   }
 
-  const images = message.imageUrls || []
+  if (!message) {
+    return (
+      <View style={styles.centered}>
+        <Ionicons name="alert-circle-outline" size={60} color="#666" />
+        <Text style={styles.loadingText}>Carta não encontrada</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Text style={styles.backBtnText}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    )
+  }
 
+  const images = (() => {
+    const raw =
+      Array.isArray(message.imageUrls) && message.imageUrls.length > 0
+        ? message.imageUrls
+        : message.imageUrl
+          ? [message.imageUrl]
+          : []
+
+    // Achata arrays aninhados ([[a],[b]] → [a,b]) e remove não-strings
+    const flat = raw.flat(Infinity)
+    return flat.filter((u) => typeof u === 'string' && u.length > 0)
+  })()
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -94,54 +131,65 @@ export default function MessageDetail() {
       </View>
 
       <View style={styles.meta}>
-        <Image
+        <ExpoImage
           source={{ uri: message.from?.profileImage }}
           style={styles.avatar}
         />
         <View style={{ flex: 1 }}>
-          <Text style={styles.username}>@{message.from?.username}</Text>
+          <Text style={styles.username}>@{message.from?.username || 'desconhecido'}</Text>
           <Text style={styles.date}>{formatDate(message.createdAt)}</Text>
         </View>
       </View>
 
-      {/* Carrossel de páginas */}
-      <View style={styles.carouselWrapper}>
-        <FlatList
-          ref={flatListRef}
-          data={images}
-          keyExtractor={(_, i) => String(i)}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onScroll}
-          renderItem={({ item }) => (
-            <View style={styles.pageWrapper}>
-              <Image
-                source={{ uri: item }}
-                style={styles.image}
-                contentFit="contain"
-              />
-            </View>
-          )}
-        />
-      </View>
-
-      {/* Indicador de página */}
-      {images.length > 1 && (
-        <View style={styles.dots}>
-          {images.map((_, i) => (
-            <View
-              key={i}
-              style={[styles.dot, i === currentPage && styles.dotActive]}
-            />
-          ))}
+      {images.length === 0 ? (
+        <View style={styles.centered}>
+          <Ionicons name="image-outline" size={60} color="#666" />
+          <Text style={styles.loadingText}>Nenhuma imagem nesta carta</Text>
         </View>
-      )}
+      ) : (
+        <>
+          <View style={styles.carouselWrapper}>
+            <FlatList
+              data={images}
+              keyExtractor={(item, i) => `${i}-${item.slice(-8)}`}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={onScroll}
+              renderItem={({ item }) => {
+                if (typeof item !== 'string') {
+                  console.warn('[MessageDetail] item inválido:', item)
+                  return <View style={{ width }} />
+                }
+                return (
+                  <View style={{ width, height: '100%', padding: 12 }}>
+                    <RNImage
+                      source={{ uri: item }}
+                      style={{ width: '100%', height: '100%' }}
+                      resizeMode="contain"
+                    />
+                  </View>
+                )
+              }}
+            />
+          </View>
 
-      {images.length > 1 && (
-        <Text style={styles.pageIndicator}>
-          {currentPage + 1} / {images.length}
-        </Text>
+          {images.length > 1 && (
+            <>
+              <View style={styles.dots}>
+                {images.map((_, i) => (
+                  <View
+                    key={i}
+                    style={[styles.dot, i === currentPage && styles.dotActive]}
+                  />
+                ))}
+              </View>
+              <Text style={styles.pageIndicator}>
+                {currentPage + 1} / {images.length}
+              </Text>
+            </>
+          )}
+        </>
       )}
     </View>
   )
@@ -154,7 +202,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#1a1a2e',
+    gap: 12,
   },
+  loadingText: { color: '#aaa', fontSize: 14 },
+  backBtn: {
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#6c5ce7',
+  },
+  backBtnText: { color: '#fff', fontWeight: '600' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -180,12 +238,7 @@ const styles = StyleSheet.create({
   avatar: { width: 44, height: 44, borderRadius: 22 },
   username: { color: '#fff', fontSize: 16, fontWeight: '600' },
   date: { color: '#999', fontSize: 13, marginTop: 2 },
-  carouselWrapper: { flex: 1, marginVertical: 8 },
-  pageWrapper: {
-    width,
-    paddingHorizontal: 12,
-  },
-  image: { flex: 1, width: '100%' },
+  carouselWrapper: { flex: 1 },
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
