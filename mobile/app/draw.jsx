@@ -167,7 +167,7 @@ const sendTo = async (contact) => {
     console.log('[draw] total capturado:', capturedImages.length, 'imagens')
 
     console.log('[draw] chamando sendMessage...')
-    await sendMessage(token, contact._id, capturedImages)
+    await sendMessage(contact._id, capturedImages)
     console.log('[draw] sendMessage retornou ok')
 
     Alert.alert('Enviado!', `Sua carta foi enviada para @${contact.username}.`)

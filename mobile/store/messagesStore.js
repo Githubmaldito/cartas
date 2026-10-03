@@ -1,12 +1,25 @@
 import { create } from 'zustand'
 import { API_URL } from '../constants/api'
+import useAuthStore from './authStore'
+
+// Sempre pega o token atual do authStore
+const getToken = () => useAuthStore.getState().token
 
 const useMessagesStore = create((set, get) => ({
   messages: [],
   sentMessages: [],
   loading: false,
 
-  fetchReceived: async (token) => {
+  fetchReceived: async () => {
+    const token = getToken()
+    console.log('[messagesStore] fetchReceived token?', !!token, 'len:', token?.length)
+
+    if (!token) {
+      console.warn('[messagesStore] fetchReceived sem token, abortando')
+      set({ loading: false })
+      return
+    }
+
     set({ loading: true })
     try {
       const res = await fetch(`${API_URL}/messages`, {
@@ -22,7 +35,9 @@ const useMessagesStore = create((set, get) => ({
     }
   },
 
-  fetchSent: async (token) => {
+  fetchSent: async () => {
+    const token = getToken()
+    if (!token) return
     try {
       const res = await fetch(`${API_URL}/messages/sent`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -35,23 +50,10 @@ const useMessagesStore = create((set, get) => ({
     }
   },
 
-  // sendMessage: async (token, to, imagesBase64) => {
-  //   console.log('[sendMessage] imagens:', imagesBase64.length, 'primeira:', imagesBase64[0]?.slice(0, 60))
-  //   const res = await fetch(`${API_URL}/messages`, {
-  //     method: 'POST',
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: JSON.stringify({ to, images: imagesBase64 }),
-  //   });
-  //   const data = await res.json();
-  //   if (!res.ok) throw new Error(data.message || 'Falha ao enviar');
-  //   return data;
-  // },
+  sendMessage: async (to, imagesBase64) => {
+    const token = getToken()
+    console.log('[messagesStore] sendMessage token?', !!token, 'len:', token?.length)
 
-  sendMessage: async (token, to, imagesBase64) => {
-    console.log('[messagesStore] sendMessage chamado. to:', to, 'imagens:', imagesBase64.length)
     const res = await fetch(`${API_URL}/messages`, {
       method: 'POST',
       headers: {
@@ -60,13 +62,14 @@ const useMessagesStore = create((set, get) => ({
       },
       body: JSON.stringify({ to, images: imagesBase64 }),
     })
-    console.log('[messagesStore] resposta status:', res.status)
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || 'Falha ao enviar')
     return data
   },
 
-  markAsRead: async (token, messageId) => {
+  markAsRead: async (messageId) => {
+    const token = getToken()
+    if (!token) return
     try {
       await fetch(`${API_URL}/messages/${messageId}/read`, {
         method: 'PATCH',

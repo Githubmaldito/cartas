@@ -37,8 +37,10 @@ export default function Inbox() {
   const [refreshing, setRefreshing] = useState(false)
   const router = useRouter()
 
-  const load = async () => {
-    await fetchReceived(token)
+  const load = async (refresh = false) => {
+    if (refresh) setRefreshing(true)
+    await fetchReceived()
+    if (refresh) setRefreshing(false)
   }
 
   const handleRefresh = async () => {
@@ -55,7 +57,7 @@ export default function Inbox() {
   }, [fetchReceived, token])
 
   const openMessage = async (item) => {
-    if (!item.read) await markAsRead(token, item._id)
+    if (!item.read) await markAsRead(item._id)
     router.push(`/message/${item._id}`)
   }
 
