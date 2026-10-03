@@ -11,9 +11,14 @@ const messageSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-        imageUrl: {
-        type:[String],
-        required: true,
+    // Formato novo (multi-páginas)
+    imageUrls: {
+        type: [String],
+        default: [],
+    },
+    // Formato antigo (compatibilidade com mensagens já existentes)
+    imageUrl: {
+        type: String,
     },
     read: {
         type: Boolean,

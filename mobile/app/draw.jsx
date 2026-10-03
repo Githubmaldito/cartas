@@ -137,48 +137,48 @@ export default function Draw() {
   }
 
   // Captura cada página e envia
-const sendTo = async (contact) => {
-  console.log('[draw] sendTo iniciado para', contact.username)
-  setShowContacts(false)
-  setSending(true)
-  const originalPage = currentPage
+  const sendTo = async (contact) => {
+    console.log('[draw] sendTo iniciado para', contact.username)
+    setShowContacts(false)
+    setSending(true)
+    const originalPage = currentPage
 
-  try {
-    const capturedImages = []
-    console.log('[draw] total de páginas:', pages.length)
+    try {
+      const capturedImages = []
+      console.log('[draw] total de páginas:', pages.length)
 
-    for (let i = 0; i < pages.length; i++) {
-      console.log('[draw] capturando página', i)
-      setCurrentPage(i)
-      await new Promise((resolve) => setTimeout(resolve, 400))
+      for (let i = 0; i < pages.length; i++) {
+        console.log('[draw] capturando página', i)
+        setCurrentPage(i)
+        await new Promise((resolve) => setTimeout(resolve, 400))
 
-      const uri = await shotRef.current.capture()
-      console.log('[draw] captura ok, uri:', uri)
+        const uri = await shotRef.current.capture()
+        console.log('[draw] captura ok, uri:', uri)
 
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: 'base64',
-      })
-      console.log('[draw] base64 length:', base64.length)
+        const base64 = await FileSystem.readAsStringAsync(uri, {
+          encoding: 'base64',
+        })
+        console.log('[draw] base64 length:', base64.length)
 
-      capturedImages.push(`data:image/png;base64,${base64}`)
+        capturedImages.push(`data:image/png;base64,${base64}`)
+      }
+
+      setCurrentPage(originalPage)
+      console.log('[draw] total capturado:', capturedImages.length, 'imagens')
+
+      console.log('[draw] chamando sendMessage...')
+      const response = await sendMessage(contact._id, capturedImages)
+      console.log('[draw] resposta do backend:', JSON.stringify(response).slice(0, 300))
+
+      Alert.alert('Enviado!', `Sua carta foi enviada para @${contact.username}.`)
+      router.replace('/(tabs)')
+    } catch (err) {
+      console.error('[draw] erro no sendTo:', err)
+      Alert.alert('Erro', err.message || 'Não foi possível enviar.')
+    } finally {
+      setSending(false)
     }
-
-    setCurrentPage(originalPage)
-    console.log('[draw] total capturado:', capturedImages.length, 'imagens')
-
-    console.log('[draw] chamando sendMessage...')
-    await sendMessage(contact._id, capturedImages)
-    console.log('[draw] sendMessage retornou ok')
-
-    Alert.alert('Enviado!', `Sua carta foi enviada para @${contact.username}.`)
-    router.replace('/(tabs)')
-  } catch (err) {
-    console.error('[draw] erro no sendTo:', err)
-    Alert.alert('Erro', err.message || 'Não foi possível enviar.')
-  } finally {
-    setSending(false)
   }
-}
 
   return (
     <View style={styles.container}>
