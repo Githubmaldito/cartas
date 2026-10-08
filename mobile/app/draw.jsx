@@ -184,7 +184,7 @@ export default function Draw() {
     currentPage < pages.length - 1 && setCurrentPage(currentPage + 1)
 
 
-// pro texto
+  // pro texto
   const openTextModal = () => {
     setTextValue('')
     setShowTextModal(true)
@@ -316,13 +316,20 @@ export default function Draw() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-          <Ionicons name="close" size={26} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerSide}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
+            <Ionicons name="close" size={30} color="#fff" />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.headerTitle}>Nova carta</Text>
-        <TouchableOpacity onPress={removePage} style={styles.iconBtn}>
-          <Ionicons name="trash-outline" size={22} color="#fff" />
-        </TouchableOpacity>
+        <View style={[styles.headerSide, styles.headerSideRight]}>
+          <TouchableOpacity onPress={undoLast} style={styles.iconBtn}>
+            <Ionicons name="arrow-undo-outline" style={{ marginRight: 10 }} size={30} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={removePage} style={styles.iconBtn}>
+            <Ionicons name="trash-outline" size={30} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Barra de páginas */}
@@ -384,24 +391,20 @@ export default function Draw() {
       </ViewShot>
 
       {/* Toolbar */}
+      {/* Toolbar */}
       <View style={styles.toolbar}>
-        <TouchableOpacity style={styles.toolBtn} onPress={undoLast}>
-          <Ionicons name="arrow-undo-outline" size={22} color="#fff" />
-          <Text style={styles.toolText}>Desfazer</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.toolBtn} onPress={clearPage}>
-          <Ionicons name="brush-outline" size={22} color="#fff" />
+          <Ionicons name="brush-outline" size={28} color="#fff" />
           <Text style={styles.toolText}>Limpar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.toolBtn} onPress={openTextModal}>
-          <Ionicons name="text-outline" size={22} color="#fff" />
+          <Ionicons name="text-outline" size={28} color="#fff" />
           <Text style={styles.toolText}>Texto</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.toolBtn} onPress={addPage}>
-          <Ionicons name="add-outline" size={22} color="#fff" />
+          <Ionicons name="add-outline" size={28} color="#fff" />
           <Text style={styles.toolText}>Página</Text>
         </TouchableOpacity>
 
@@ -434,9 +437,7 @@ export default function Draw() {
         >
           <View style={styles.textModalCard}>
             <Text style={styles.textModalTitle}>Adicionar texto</Text>
-            <Text style={styles.textModalHint}>
-              O texto aparecerá no topo da página.
-            </Text>
+            
 
             {/* Seletor de tamanho */}
             <View style={styles.sizeRow}>
@@ -537,22 +538,36 @@ export default function Draw() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a1a2e' },
+  icones: {
+    size: 24,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 8,
+    paddingHorizontal: 22,
+    paddingTop: 30,
+    paddingBottom: 6,
+  },
+  headerSide: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerSideRight: {
+    justifyContent: 'flex-end',
   },
   iconBtn: {
-    width: 40,
-    height: 40,
+    width: 60,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: { color: '#fff', fontSize: 18, fontWeight: '600' },
-
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   pageBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -582,13 +597,13 @@ const styles = StyleSheet.create({
   canvas: { flex: 1 },
 
   toolbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 6,
-    paddingVertical: 12,
-    paddingBottom: 30,
-    gap: 4,
-  },
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  paddingHorizontal: 12,
+  paddingTop: 12,
+  paddingBottom: 55,   // afasta os botões do sistema
+  gap: 12,
+},
   toolBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -599,7 +614,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a274a',
   },
   sendBtn: { backgroundColor: COLORS.primary },
-  toolText: { color: '#fff', fontSize: 11, fontWeight: '600' },
+  toolText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
   // Modal de texto
   textModalOverlay: {
@@ -617,15 +632,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 18,
     textAlign: 'center',
   },
-  textModalHint: {
-    color: '#8a86a8',
-    fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 14,
-  },
+  // textModalHint: {
+  //   color: '#8a86a8',
+  //   fontSize: 12,
+  //   textAlign: 'center',
+  //   marginBottom: 14,
+  // },
   sizeRow: {
     flexDirection: 'row',
     justifyContent: 'center',
