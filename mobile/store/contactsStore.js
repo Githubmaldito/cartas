@@ -1,11 +1,21 @@
 import { create } from 'zustand'
 import { API_URL } from '../constants/api'
+import useAuthStore from './authStore'
+
+// Sempre pega o token atual do authStore
+const getToken = () => useAuthStore.getState().token
 
 const useContactsStore = create((set, get) => ({
   contacts: [],
   loading: false,
 
-  fetchContacts: async (token) => {
+  fetchContacts: async () => {
+    const token = getToken()
+    if (!token) {
+      set({ loading: false })
+      return
+    }
+
     set({ loading: true })
     try {
       const res = await fetch(`${API_URL}/users/contacts`, {
@@ -21,7 +31,10 @@ const useContactsStore = create((set, get) => ({
     }
   },
 
-  findUser: async (token, code) => {
+  findUser: async (code) => {
+    const token = getToken()
+    if (!token) throw new Error('Sessão expirada. Faça login novamente.')
+
     const res = await fetch(
       `${API_URL}/users/find?code=${encodeURIComponent(code)}`,
       { headers: { Authorization: `Bearer ${token}` } }
@@ -31,7 +44,10 @@ const useContactsStore = create((set, get) => ({
     return data
   },
 
-  addContact: async (token, contactId) => {
+  addContact: async (contactId) => {
+    const token = getToken()
+    if (!token) throw new Error('Sessão expirada. Faça login novamente.')
+
     const res = await fetch(`${API_URL}/users/contacts`, {
       method: 'POST',
       headers: {
@@ -42,11 +58,14 @@ const useContactsStore = create((set, get) => ({
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.message || 'Falha ao adicionar')
-    await get().fetchContacts(token)
+    await get().fetchContacts()
     return data
   },
 
-  removeContact: async (token, contactId) => {
+  removeContact: async (contactId) => {
+    const token = getToken()
+    if (!token) throw new Error('Sessão expirada. Faça login novamente.')
+
     const res = await fetch(`${API_URL}/users/contacts/${contactId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
