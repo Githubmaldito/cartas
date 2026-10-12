@@ -36,7 +36,16 @@ const FONT_SIZES = [
   { label: 'G', value: 24 },
 ]
 
-// Dimensões de layout
+const BRUSH_SIZES = [
+  { label: 'S', value: 2 },
+  { label: 'M', value: 4 },
+  { label: 'L', value: 8 },
+]
+
+const ERASER_WIDTH = 22
+const PAPER_COLOR = '#f5f5f0'
+const INK_COLOR = '#1a1a2e'
+
 const TEXT_START_Y = 40
 const TEXT_LEFT = 20
 const TEXT_LINE_HEIGHT_FACTOR = 1.35
@@ -48,10 +57,12 @@ export default function Draw() {
   const { contacts, fetchContacts } = useContactsStore()
   const { sendMessage } = useMessagesStore()
 
-  const [pages, setPages] = useState([[]]) // lista de itens por página
+  const [pages, setPages] = useState([[]])
   const [currentPage, setCurrentPage] = useState(0)
   const [currentPath, setCurrentPath] = useState('')
   const [fontSize, setFontSize] = useState(18)
+  const [brushSize, setBrushSize] = useState(4)
+  const [isEraser, setIsEraser] = useState(false)
 
   const [showTextModal, setShowTextModal] = useState(false)
   const [textValue, setTextValue] = useState('')
@@ -69,7 +80,6 @@ export default function Draw() {
 
   // ---------- Quebra de linha ----------
   const wrapText = (text) => {
-    // Largura útil = tela - margens da área - margens do texto
     const usable = screenWidth - 24 - 24 - TEXT_LEFT * 2
     const charWidth = fontSize * 0.55
     const maxChars = Math.max(10, Math.floor(usable / charWidth))
@@ -96,6 +106,13 @@ export default function Draw() {
   }
 
   // ---------- Desenho ----------
+  const getStrokeConfig = () => {
+    if (isEraser) {
+      return { stroke: PAPER_COLOR, strokeWidth: ERASER_WIDTH }
+    }
+    return { stroke: INK_COLOR, strokeWidth: brushSize }
+  }
+
   const onTouchStart = (e) => {
     isDrawing.current = true
     const { locationX, locationY } = e.nativeEvent
@@ -112,15 +129,20 @@ export default function Draw() {
     if (!isDrawing.current) return
     isDrawing.current = false
     if (currentPath) {
+      const { stroke, strokeWidth } = getStrokeConfig()
       setPages((prev) => {
         const next = [...prev]
-        next[currentPage] = [...next[currentPage], { type: 'path', d: currentPath }]
+        next[currentPage] = [
+          ...next[currentPage],
+          { type: 'path', d: currentPath, stroke, strokeWidth },
+        ]
         return next
       })
       setCurrentPath('')
     }
   }
 
+  // ---------- Ações ----------
   const undoLast = () => {
     setPages((prev) => {
       const next = [...prev]
@@ -147,11 +169,12 @@ export default function Draw() {
 
   const addPage = () => {
     if (currentPath) {
+      const { stroke, strokeWidth } = getStrokeConfig()
       setPages((prev) => {
         const next = [...prev]
         next[currentPage] = [
           ...next[currentPage],
-          { type: 'path', d: currentPath },
+          { type: 'path', d: currentPath, stroke, strokeWidth },
         ]
         return next
       })
@@ -183,9 +206,9 @@ export default function Draw() {
   const goNext = () =>
     currentPage < pages.length - 1 && setCurrentPage(currentPage + 1)
 
-
-  // pro texto
+  // ---------- Texto ----------
   const openTextModal = () => {
+    setIsEraser(false)
     setTextValue('')
     setShowTextModal(true)
     setTimeout(() => inputRef.current?.focus(), 200)
@@ -210,7 +233,7 @@ export default function Draw() {
     setShowTextModal(false)
   }
 
-
+  // ---------- Envio ----------
   const hasAnyContent = pages.some((p) => p.length > 0)
   const canSend = hasAnyContent
 
@@ -260,21 +283,21 @@ export default function Draw() {
     }
   }
 
-  // renderiza paths primeiro, depois texts.
+  // ---------- Render dos itens ----------
   const renderItems = (items) => {
     const paths = items.filter((it) => it.type === 'path')
     const texts = items.filter((it) => it.type === 'text')
 
     const nodes = []
 
-    // Paths
+    // Paths — usam a cor/espessura armazenadas em cada um
     paths.forEach((item, i) => {
       nodes.push(
         <Path
           key={`p-${i}`}
           d={item.d}
-          stroke="#1a1a2e"
-          strokeWidth={3}
+          stroke={item.stroke || INK_COLOR}
+          strokeWidth={item.strokeWidth || 3}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -295,7 +318,7 @@ export default function Draw() {
           key={`t-${i}`}
           x={TEXT_LEFT}
           y={y}
-          fill="#1a1a2e"
+          fill={INK_COLOR}
           fontSize={item.size}
           fontFamily={FONT_FAMILY}
           fontWeight="500"
@@ -312,22 +335,28 @@ export default function Draw() {
     return nodes
   }
 
+  const { stroke: currentStroke, strokeWidth: currentStrokeWidth } =
+    getStrokeConfig()
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerSide}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.iconBtn}>
-            <Ionicons name="close" size={30} color="#fff" />
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.iconBtn}
+          >
+            <Ionicons name="close" size={26} color="#fff" />
           </TouchableOpacity>
         </View>
         <Text style={styles.headerTitle}>Nova carta</Text>
         <View style={[styles.headerSide, styles.headerSideRight]}>
           <TouchableOpacity onPress={undoLast} style={styles.iconBtn}>
-            <Ionicons name="arrow-undo-outline" style={{ marginRight: 10 }} size={30} color="#fff" />
+            <Ionicons name="arrow-undo-outline" size={24} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity onPress={removePage} style={styles.iconBtn}>
-            <Ionicons name="trash-outline" size={30} color="#fff" />
+            <Ionicons name="trash-outline" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -356,6 +385,50 @@ export default function Draw() {
         </TouchableOpacity>
       </View>
 
+      {/* Barra de ferramentas de desenho */}
+      <View style={styles.penBar}>
+        <TouchableOpacity
+          style={[styles.penPill, isEraser && styles.penPillActive]}
+          onPress={() => setIsEraser((v) => !v)}
+        >
+          <Ionicons
+            name="backspace-outline"
+            size={16}
+            color={isEraser ? '#fff' : '#888'}
+          />
+          <Text
+            style={[styles.penText, isEraser && styles.penTextActive]}
+          >
+            Borracha
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.penSeparator} />
+
+        {BRUSH_SIZES.map((b) => {
+          const active = !isEraser && brushSize === b.value
+          return (
+            <TouchableOpacity
+              key={b.value}
+              style={[styles.brushPill, active && styles.brushPillActive]}
+              onPress={() => {
+                setBrushSize(b.value)
+                setIsEraser(false)
+              }}
+            >
+              <View
+                style={{
+                  width: b.value * 2 + 2,
+                  height: b.value * 2 + 2,
+                  borderRadius: (b.value * 2 + 2) / 2,
+                  backgroundColor: active ? '#fff' : '#888',
+                }}
+              />
+            </TouchableOpacity>
+          )
+        })}
+      </View>
+
       {/* Área de desenho */}
       <ViewShot
         ref={shotRef}
@@ -379,8 +452,8 @@ export default function Draw() {
             {currentPath ? (
               <Path
                 d={currentPath}
-                stroke="#1a1a2e"
-                strokeWidth={3}
+                stroke={currentStroke}
+                strokeWidth={currentStrokeWidth}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -391,20 +464,19 @@ export default function Draw() {
       </ViewShot>
 
       {/* Toolbar */}
-      {/* Toolbar */}
       <View style={styles.toolbar}>
         <TouchableOpacity style={styles.toolBtn} onPress={clearPage}>
-          <Ionicons name="brush-outline" size={28} color="#fff" />
+          <Ionicons name="brush-outline" size={22} color="#fff" />
           <Text style={styles.toolText}>Limpar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.toolBtn} onPress={openTextModal}>
-          <Ionicons name="text-outline" size={28} color="#fff" />
+          <Ionicons name="text-outline" size={22} color="#fff" />
           <Text style={styles.toolText}>Texto</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.toolBtn} onPress={addPage}>
-          <Ionicons name="add-outline" size={28} color="#fff" />
+          <Ionicons name="add-outline" size={22} color="#fff" />
           <Text style={styles.toolText}>Página</Text>
         </TouchableOpacity>
 
@@ -437,9 +509,10 @@ export default function Draw() {
         >
           <View style={styles.textModalCard}>
             <Text style={styles.textModalTitle}>Adicionar texto</Text>
-            
+            <Text style={styles.textModalHint}>
+              O texto aparecerá no topo da página.
+            </Text>
 
-            {/* Seletor de tamanho */}
             <View style={styles.sizeRow}>
               {FONT_SIZES.map((s) => (
                 <TouchableOpacity
@@ -538,15 +611,13 @@ export default function Draw() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#1a1a2e' },
-  icones: {
-    size: 24,
-  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 22,
-    paddingTop: 30,
-    paddingBottom: 6,
+    paddingHorizontal: 12,
+    paddingTop: 50,
+    paddingBottom: 8,
   },
   headerSide: {
     flex: 1,
@@ -556,18 +627,19 @@ const styles = StyleSheet.create({
   headerSideRight: {
     justifyContent: 'flex-end',
   },
-  iconBtn: {
-    width: 60,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   headerTitle: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
   },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   pageBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -586,24 +658,62 @@ const styles = StyleSheet.create({
   pageNavDisabled: { opacity: 0.3 },
   pageIndicator: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
+  penBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  penPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#2a274a',
+  },
+  penPillActive: { backgroundColor: COLORS.primary },
+  penText: { color: '#888', fontSize: 12, fontWeight: '600' },
+  penTextActive: { color: '#fff' },
+
+  penSeparator: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#3a3760',
+    marginHorizontal: 4,
+  },
+
+  brushPill: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#2a274a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  brushPillActive: { backgroundColor: '#4a3f8a' },
+
   canvasWrapper: {
     flex: 1,
     margin: 12,
     marginTop: 4,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#f5f5f0',
+    backgroundColor: PAPER_COLOR,
   },
   canvas: { flex: 1 },
 
   toolbar: {
-  flexDirection: 'row',
-  justifyContent: 'space-around',
-  paddingHorizontal: 12,
-  paddingTop: 12,
-  paddingBottom: 55,   // afasta os botões do sistema
-  gap: 12,
-},
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 55,
+    gap: 6,
+  },
   toolBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -614,9 +724,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a274a',
   },
   sendBtn: { backgroundColor: COLORS.primary },
-  toolText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  toolText: { color: '#fff', fontSize: 11, fontWeight: '600' },
 
-  // Modal de texto
   textModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -632,15 +741,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 18,
+    marginBottom: 4,
     textAlign: 'center',
   },
-  // textModalHint: {
-  //   color: '#8a86a8',
-  //   fontSize: 12,
-  //   textAlign: 'center',
-  //   marginBottom: 14,
-  // },
+  textModalHint: {
+    color: '#8a86a8',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
   sizeRow: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -659,8 +768,8 @@ const styles = StyleSheet.create({
   sizeText: { color: '#888', fontSize: 13, fontWeight: '700' },
   sizeTextActive: { color: '#fff' },
   textInput: {
-    backgroundColor: '#f5f5f0',
-    color: '#1a1a2e',
+    backgroundColor: PAPER_COLOR,
+    color: INK_COLOR,
     borderRadius: 10,
     padding: 14,
     minHeight: 120,
@@ -684,7 +793,6 @@ const styles = StyleSheet.create({
   textModalConfirm: { backgroundColor: COLORS.primary },
   textModalConfirmText: { color: '#fff', fontWeight: '700' },
 
-  // Modal de contatos
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',

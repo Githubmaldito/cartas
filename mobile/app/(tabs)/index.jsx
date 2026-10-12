@@ -53,7 +53,7 @@ export default function Inbox() {
   }
 
   useEffect(() => {
-    void load()
+    void load() //ignoera
   }, [fetchReceived, token])
 
   const openMessage = async (item) => {
@@ -107,8 +107,7 @@ export default function Inbox() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>Cartas recebidas</Text>
-            <Text style={styles.subtitle}>Os desenhos que chegaram até você</Text>
+            <Text style={styles.title}>Caixa de entrada</Text>
           </View>
         }
         ListEmptyComponent={
@@ -130,7 +129,7 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background || '#1a1a2e' },
   listContent: { padding: 16 },
   header: { marginBottom: 16 },
-  title: { fontSize: 26, fontWeight: '700', color: COLORS.primary, marginBottom: 4 },
+  title: { fontSize: 30, fontWeight: '800', color: COLORS.primary, marginBottom: 12, marginTop: 8 },
   subtitle: { fontSize: 14, color: COLORS.textSecondary },
   card: {
     flexDirection: 'row',
@@ -145,8 +144,8 @@ const styles = StyleSheet.create({
   avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
   cardContent: { flex: 1 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  username: { fontWeight: '600', color: '#fff' },
-  date: { fontSize: 12, color: COLORS.textSecondary },
+  username: { fontWeight: '700', color: '#720000', fontSize: 14 },
+  date: { fontSize: 14, color: COLORS.textSecondary },
   thumbnail: { width: '100%', height: 140, borderRadius: 8, backgroundColor: '#222' },
   unreadDot: {
     position: 'absolute',
