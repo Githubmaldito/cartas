@@ -1,10 +1,10 @@
 
 const COLORS = {
   primary: "#e17055",
-  textPrimary: "#784e2d",
+  textPrimary: "#572c0c",
   textSecondary: "#a58e7c",
   textDark: "#50372a",
-  placeholderText: "#767676",
+  placeholderText: "#201212",
   background: "#ede1d1",
   cardBackground: "#faf5eb",
   inputBackground: "#f7f2ea",

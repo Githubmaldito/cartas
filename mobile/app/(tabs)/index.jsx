@@ -61,26 +61,32 @@ export default function Inbox() {
     router.push(`/message/${item._id}`)
   }
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.card, !item.read && styles.unreadCard]}
-      onPress={() => openMessage(item)}
-      activeOpacity={0.85}
-    >
-      <Image source={{ uri: item.from?.profileImage }} style={styles.avatar} />
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.username}>@{item.from?.username || 'desconhecido'}</Text>
+  const renderItem = ({ item }) => {
+    const isUnread = !item.read
+
+    return (
+      <TouchableOpacity
+        style={[styles.card, isUnread && styles.unreadCard]}
+        onPress={() => openMessage(item)}
+        activeOpacity={0.85}
+      >
+        <Image source={{ uri: item.from?.profileImage }} style={styles.avatar} />
+
+        <View style={styles.cardContent}>
+          <Text style={styles.username} numberOfLines={1}>
+            @{item.from?.username || 'desconhecido'}
+          </Text>
           <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
         </View>
-        <View style={styles.sealedEnvelope}>
-          <Ionicons name="mail" size={42} color={COLORS.primary} />
-          <Text style={styles.sealedText}>Toque para abrir</Text>
-        </View>
-      </View>
-      {!item.read && <View style={styles.unreadDot} />}
-    </TouchableOpacity>
-  )
+
+        <Ionicons
+          name={isUnread ? 'mail' : 'mail-open-outline'}
+          size={30}
+          color={isUnread ? COLORS.primary : COLORS.textSecondary}
+        />
+      </TouchableOpacity>
+    )
+  }
 
   if (loading && messages.length === 0) {
     return (
@@ -133,44 +139,37 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: COLORS.textSecondary },
   card: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: COLORS.border,
+    gap: 12,
   },
-  unreadCard: { borderColor: COLORS.primary, borderWidth: 2 },
-  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
-  cardContent: { flex: 1 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  username: { fontWeight: '700', color: '#720000', fontSize: 14 },
-  date: { fontSize: 14, color: COLORS.textSecondary },
-  thumbnail: { width: '100%', height: 140, borderRadius: 8, backgroundColor: '#222' },
-  unreadDot: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.primary,
+  unreadCard: {
+    borderColor: COLORS.primary,
+    borderWidth: 2,
   },
-  sealedEnvelope: {
-    width: '100%',
-    height: 100,
-    borderRadius: 8,
-    backgroundColor: '#22223a',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#33334d',
-    borderStyle: 'dashed',
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
-  sealedText: {
-    color: COLORS.textSecondary,
+  cardContent: {
+    flex: 1,
+    justifyContent: 'center', 
+  },
+  username: {
+    fontWeight: '700',
+    color: '#fff',
+    fontSize: 15,
+    marginBottom: 3,
+  },
+  date: {
     fontSize: 12,
+    color: COLORS.textSecondary,
   },
   empty: { alignItems: 'center', marginTop: 80, gap: 8 },
   emptyText: { fontSize: 16, fontWeight: '600', color: COLORS.textSecondary },

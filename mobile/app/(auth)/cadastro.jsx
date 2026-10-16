@@ -7,22 +7,18 @@ import { Ionicons } from '@expo/vector-icons'
 import useAuthStore from '../../store/authStore'
 
 const Cadastro = () => {
-
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  // const [isLoading, setIsloading] = useState(false)
-  const { user, isLoading, register, token } = useAuthStore();
-  const router = useRouter();
-
+  const { isLoading, register } = useAuthStore()
+  const router = useRouter()
 
   const handleCadastro = async () => {
-    const result = await register(username, email, password);
+    const result = await register(username, email, password)
     if (!result.success) {
-      Alert.alert('Erro', result.message);
+      Alert.alert('Erro', result.message)
     } else {
-      // Redirecionar para a tela principal após cadastro bem-sucedido
       router.back()
     }
   }
@@ -32,26 +28,28 @@ const Cadastro = () => {
       <View style={styles.card}>
         {/* header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Título do App📚</Text>
-          <Text style={styles.subtitle}>Compartilhe a sua leitura.</Text>
+          <Text style={styles.title}>Cadastra aí</Text>
+          <Text style={styles.subtitle}>Cria a consta air.</Text>
         </View>
 
         {/* form */}
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nome</Text>
+            <Text style={styles.label}>Nome de usuário</Text>
             <View style={styles.inputContainer}>
               <Ionicons
-                name="person-outline"
+                name="at-outline"
                 size={20}
                 color={COLORS.primary}
+                style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Digite o seu nome"
+                placeholder="Escolha um nome de usuário"
+                placeholderTextColor={COLORS.placeholderTextColor}
                 value={username}
                 onChangeText={setUsername}
-                autoCapitalize='none'
+                autoCapitalize="none"
               />
             </View>
           </View>
@@ -59,9 +57,8 @@ const Cadastro = () => {
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputContainer}>
-              {/* ícone de email */}
               <Ionicons
-                name='mail-outline'
+                name="mail-outline"
                 size={20}
                 color={COLORS.primary}
                 style={styles.inputIcon}
@@ -69,6 +66,7 @@ const Cadastro = () => {
               <TextInput
                 style={styles.input}
                 placeholder="Digite o seu email"
+                placeholderTextColor={COLORS.placeholderTextColor}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -77,7 +75,6 @@ const Cadastro = () => {
             </View>
           </View>
 
-          {/* input de senha */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Senha</Text>
             <View style={styles.inputContainer}>
@@ -85,17 +82,19 @@ const Cadastro = () => {
                 name="lock-closed-outline"
                 size={20}
                 color={COLORS.primary}
+                style={styles.inputIcon}
               />
               <TextInput
                 style={styles.input}
-                placeholder="Crie sua senha"
+                placeholder="Crie sua senha (mínimo 8 caracteres)"
+                placeholderTextColor={COLORS.placeholderTextColor}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
               <Ionicons
-                name={showPassword ? "eye-outline" : "eye-off-outline"}
+                name={showPassword ? 'eye-outline' : 'eye-off-outline'}
                 size={20}
                 color={COLORS.primary}
                 onPress={() => setShowPassword(!showPassword)}
@@ -103,24 +102,28 @@ const Cadastro = () => {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleCadastro} disabled={isLoading}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleCadastro}
+            disabled={isLoading}
+          >
             {isLoading ? (
               <ActivityIndicator color={COLORS.white} />
             ) : (
-              <Text style={styles.buttonText}>Cadstrar-se</Text>
+              <Text style={styles.buttonText}>Criar conta</Text>
             )}
           </TouchableOpacity>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Já possui uma conta?</Text>
             <TouchableOpacity onPress={() => router.back()}>
-              <Text style={styles.link}>Faça Login</Text>
+              <Text style={styles.link}>Faça login</Text>
             </TouchableOpacity>
           </View>
-
         </View>
       </View>
     </View>
   )
 }
+
 export default Cadastro
