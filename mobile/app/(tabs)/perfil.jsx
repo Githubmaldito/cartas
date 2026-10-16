@@ -173,7 +173,7 @@ const Perfil = () => {
       <Image source={{ uri: item.profileImage }} style={styles.avatar} />
       <Text style={styles.contactName}>@{item.username}</Text>
       <TouchableOpacity onPress={() => confirmRemove(item)}>
-        <Ionicons name="close-circle-outline" size={22} color={COLORS.textSecondary} />
+        <Ionicons name="close-circle-outline" size={32} color={COLORS.textSecondary} marginHorizontal={6} />
       </TouchableOpacity>
     </View>
   )
@@ -288,9 +288,9 @@ export default Perfil
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background || '#1a1a2e' },
   list: { padding: 16, paddingBottom: 100 },
-  section: { marginVertical: 12 },
+  section: { marginVertical: 14 },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: '600',
     color: COLORS.primary,
     marginBottom: 8,
@@ -376,12 +376,23 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#2a274a',
+    backgroundColor: '#0e01a5',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatar: { width: 40, height: 40, borderRadius: 20 },
-  contactName: { flex: 1, color: '#301717', fontWeight: '500' },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 20,
+
+  },
+  contactName: {
+    flex: 1,
+    color: '#301717',
+    fontWeight: '500',
+    fontSize: 16,
+    marginHorizontal: 12,
+  },
   emptyText: {
     color: COLORS.textSecondary,
     textAlign: 'center',

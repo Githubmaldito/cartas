@@ -72,18 +72,18 @@ export default function Inbox() {
       >
         <Image source={{ uri: item.from?.profileImage }} style={styles.avatar} />
 
-        <View style={styles.cardContent}>
-          <Text style={styles.username} numberOfLines={1}>
-            @{item.from?.username || 'desconhecido'}
-          </Text>
-          <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
-        </View>
+        <Text style={styles.username} numberOfLines={1}>
+          @{item.from?.username || 'desconhecido'}
+        </Text>
 
-        <Ionicons
-          name={isUnread ? 'mail' : 'mail-open-outline'}
-          size={30}
-          color={isUnread ? COLORS.primary : COLORS.textSecondary}
-        />
+        <View style={styles.rightBlock}>
+          <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
+          <Ionicons
+            name={isUnread ? 'mail' : 'mail-open-outline'}
+            size={28}
+            color={isUnread ? COLORS.primary : COLORS.textSecondary}
+          />
+        </View>
       </TouchableOpacity>
     )
   }
@@ -118,7 +118,7 @@ export default function Inbox() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="mail-open-outline" size={60} color={COLORS.textSecondary} />
+            <Ionicons name="mail-open-outline" size={80} color={COLORS.textSecondary} />
             <Text style={styles.emptyText}>Nenhuma carta ainda</Text>
             <Text style={styles.emptySubtext}>
               Quando alguém te enviar um desenho, ele aparecerá aqui.
@@ -159,16 +159,21 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flex: 1,
-    justifyContent: 'center', 
+    justifyContent: 'center',
   },
   username: {
-    fontWeight: '700',
-    color: '#fff',
-    fontSize: 15,
-    marginBottom: 3,
+    flex: 1,
+    fontWeight: '600',
+    color: '#000000',
+    fontSize: 20,
+  },
+  rightBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 22,
   },
   date: {
-    fontSize: 12,
+    fontSize: 16,
     color: COLORS.textSecondary,
   },
   empty: { alignItems: 'center', marginTop: 80, gap: 8 },
