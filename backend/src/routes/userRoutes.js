@@ -1,6 +1,6 @@
 import express from 'express';
 import User from '../models/User.js';
-import FriendRequest from '../models/friendRequest.js';
+import FriendRequest from '../models/FriendRequest.js';
 import protectRoute from '../middleware/auth_middleware.js';
 
 const router = express.Router();
